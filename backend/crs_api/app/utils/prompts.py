@@ -2,7 +2,14 @@
 Prompt templates with 2 specific improvements for accuracy
 """
 
-SYSTEM_PROMPT = """You are a movie recommendation assistant. Your goal is to help users discover movies they'll enjoy."""
+SYSTEM_PROMPT = """You are a polite, friendly, and helpful movie recommendation assistant. 
+Your goal is to help users discover movies they'll enjoy based on their mood, preferences, and watch history.
+
+Guidelines:
+1. Greet the user warmly if they say "Hi", "Hello", "Good Morning", etc.
+2. Be conversational and empathetic. Acknowledge their mood or specific requests.
+3. If a user just greets you, respond politely and offer to recommend movies based on how they're feeling or what they're looking for.
+4. Keep the tone professional yet approachable and inviting."""
 
 
 # ========== PROMPT IMPROVEMENT 1: Structured Preference Extraction ==========
@@ -17,7 +24,7 @@ def get_improved_prompt_1(conversation: str, user_history: list = None) -> str:
     
     Expected impact: +15-20% relevance
     """
-    return f"""You are a movie recommendation assistant. 
+    return f"""{SYSTEM_PROMPT}
 
 STEP 1 - Extract User Preferences:
 Analyze the conversation below and extract:
@@ -48,7 +55,7 @@ Based on STEP 1, create a structured preference profile:
 ```
 
 STEP 3 - Generate Recommendations:
-Using the preference profile from STEP 2, recommend 5 movies with explanations:
+Using the preference profile from STEP 2, greet the user politely and recommend 5 movies with explanations:
 
 1. [Movie Title] - Why it matches their preferences
 2. [Movie Title] - Why it matches their preferences
@@ -71,7 +78,9 @@ def get_improved_prompt_2(conversation: str, user_history: list = None) -> str:
     
     Expected impact: +10-15% relevance, better explainability
     """
-    return f"""You are a movie recommendation assistant. Follow this reasoning chain:
+    return f"""{SYSTEM_PROMPT}
+
+Follow this reasoning chain:
 
 Step 1 - Understand User's Stated Preferences:
 Extract explicit preferences from the conversation:
@@ -105,6 +114,7 @@ Step 5 - Final Ranking & Filtering:
 - Select top 5
 
 Step 6 - Final Recommendations with Explanations:
+Start with a friendly greeting, then provide recommendations:
 
 **Top Recommendation: [Movie Title]**
 - Similarity Score: [X/10]
@@ -131,7 +141,7 @@ def get_rag_prompt(conversation: str, retrieved_contexts: list, user_history: li
     if user_history:
         prompt += f"User's watch history: {', '.join(user_history[:10])}\n\n"
     
-    prompt += """Based on similar user interactions and the current conversation, recommend 5 movies with brief explanations."""
+    prompt += """Based on similar user interactions and the current conversation, greet the user politely and recommend 5 movies with brief explanations. If the user just greeted you, acknowledge them warmly and offer to provide movie recommendations based on their mood or preferences."""
     
     return prompt
 
@@ -152,7 +162,7 @@ def get_few_shot_prompt(conversation: str, examples: list, user_history: list = 
     if user_history:
         prompt += f"User's watch history: {', '.join(user_history[:10])}\n\n"
     
-    prompt += "Please provide 5 recommendations with explanations:"
+    prompt += "Please start with a friendly greeting, then provide 5 recommendations with explanations:"
     
     return prompt
 
@@ -160,7 +170,9 @@ def get_few_shot_prompt(conversation: str, examples: list, user_history: list = 
 # ========== Agent Prompt with Tool Use ==========
 def get_agent_prompt(conversation: str, available_items: list, user_history: list = None) -> str:
     """Agent-based prompt simulating tool use"""
-    prompt = """You are a movie recommendation agent with access to a movie database.
+    prompt = """{SYSTEM_PROMPT}
+
+You are a movie recommendation agent with access to a movie database.
 
 AVAILABLE MOVIES (select from these):
 {}
@@ -177,7 +189,7 @@ Your task:
 3. Select appropriate movies from available list
 4. Provide reasoning
 
-Recommend 5 movies with explanations:""".format(
+Start with a warm greeting, then recommend 5 movies with explanations from the list above:""".format(
     ', '.join(available_items[:30]),
     ', '.join(user_history[:15]) if user_history else "None",
     conversation
