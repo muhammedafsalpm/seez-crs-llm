@@ -1,23 +1,19 @@
-# Core API
+setuptools==69.0.0
+wheel==0.41.0
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
-
-# LLM & AI Clients
 openai==1.6.1
 httpx==0.25.1
 aiohttp==3.9.1
 tenacity==8.2.3
-
-# Vector Store & Embeddings
-sentence-transformers==2.2.2
-faiss-cpu==1.7.4
-numpy==1.24.3
+sentence-transformers==3.4.1
+faiss-cpu==1.8.0
+numpy==1.26.3
 scikit-learn==1.3.2
-
-# Utilities
 tqdm==4.66.1
 jsonschema==4.20.0
 python-json-logger==2.0.7
+huggingface-hub==0.26.2

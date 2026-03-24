@@ -5,3 +5,5 @@ venv/
 .env.example
 __MACOSX/
 *.log
+
+myvenv
