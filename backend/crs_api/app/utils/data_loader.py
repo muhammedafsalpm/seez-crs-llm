@@ -25,6 +25,10 @@ class DataLoader:
     
     def __init__(self, data_path: str):
         self.data_path = Path(data_path)
+        print(f"Initializing DataLoader with path: {self.data_path.absolute()}")
+        if not self.data_path.exists():
+            print(f"❌ ERROR: Data path does not exist: {self.data_path}")
+        
         self.item_map: Dict[str, str] = {}
         self.user_map: Dict[str, int] = {}
         self.user_data: Dict[str, UserData] = {}

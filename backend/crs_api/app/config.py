@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional, Literal
 from functools import lru_cache
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -54,7 +55,7 @@ class Settings(BaseSettings):
     ASYNC_WORKERS: int = 10
     
     class Config:
-        env_file = ".env"
+        env_file = Path(__file__).parent.parent / ".env"
         case_sensitive = True
 
 
