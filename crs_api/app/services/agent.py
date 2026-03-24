@@ -1,13 +1,11 @@
 from typing import List, Dict, Any, Optional
-import openai
 from app.services.base import BaseRecommender
-from app.utils.prompts import get_agent_prompt, SYSTEM_PROMPT
-from app.config import get_settings
 from app.models import Message
+
+from app.utils.prompts import get_agent_prompt, SYSTEM_PROMPT
 import logging
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 
 class AgentRecommender(BaseRecommender):
@@ -15,7 +13,6 @@ class AgentRecommender(BaseRecommender):
     
     def __init__(self, data_loader, embedding_model=None):
         super().__init__(data_loader, embedding_model)
-        self.client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         self.available_movies = data_loader.get_all_items()
     
     async def recommend(
@@ -44,20 +41,14 @@ class AgentRecommender(BaseRecommender):
         # Create agent prompt
         prompt = get_agent_prompt(formatted_conversation, available_items, user_history)
         
-        # Call LLM with function calling simulation
+        # Call LLM using unified client
         try:
-            response = await self.client.chat.completions.create(
-                model=settings.OPENAI_MODEL,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=temperature,
-                max_tokens=settings.OPENAI_MAX_TOKENS,
-                timeout=30.0
+            response_text = await self._call_llm(
+                prompt=prompt,
+                system_prompt=SYSTEM_PROMPT,
+                temperature=temperature
             )
             
-            response_text = response.choices[0].message.content
             recommendations = self._parse_recommendations(response_text)
             
             # Filter to ensure recommendations are from available items
@@ -77,7 +68,8 @@ class AgentRecommender(BaseRecommender):
                     "recommender_type": "agent",
                     "user_id": user_id,
                     "personalized": user_id is not None,
-                    "available_items": len(available_items)
+                    "available_items": len(available_items),
+                    "llm_provider": self.settings.LLM_PROVIDER
                 }
             }
             
@@ -86,5 +78,9 @@ class AgentRecommender(BaseRecommender):
             return {
                 "recommendations": might_likes[:num_recommendations] if might_likes else self.available_movies[:num_recommendations],
                 "reasoning": f"Error: {str(e)}",
-                "metadata": {"error": str(e), "recommender_type": "agent"}
+                "metadata": {
+                    "error": str(e), 
+                    "recommender_type": "agent",
+                    "llm_provider": self.settings.LLM_PROVIDER
+                }
             }

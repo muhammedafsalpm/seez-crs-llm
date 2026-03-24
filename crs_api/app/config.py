@@ -11,15 +11,23 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    WORKERS: int = 4
+    WORKERS: int = 1
     
-    # LLM Settings
+    # LLM Provider Settings
+    LLM_PROVIDER: Literal["openai", "ollama"] = "openai"  # Default to openai for backward compatibility
+    USE_MOCK_LLM: bool = False  # Fallback to mock if provider fails
+    
+    # OpenAI Settings
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-3.5-turbo"
     OPENAI_TEMPERATURE: float = 0.7
     OPENAI_MAX_TOKENS: int = 500
-    ANTHROPIC_API_KEY: Optional[str] = None
-    LLM_PROVIDER: Literal["openai", "anthropic"] = "openai"
+    
+    # Ollama Settings
+    OLLAMA_MODEL: str = "mistral"  # Options: mistral, llama2, phi, etc.
+    OLLAMA_URL: str = "http://localhost:11434"
+    OLLAMA_TEMPERATURE: float = 0.7
+    OLLAMA_MAX_TOKENS: int = 500
     
     # Dataset Settings
     DATA_PATH: str = "./data"

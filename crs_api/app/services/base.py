@@ -1,9 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
-from app.models import Message
+import asyncio
+import re
 import logging
+from app.models import Message
+from app.services.llm_client import get_llm_client, BaseLLMClient, MockLLMClient
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 class BaseRecommender(ABC):
@@ -12,8 +17,8 @@ class BaseRecommender(ABC):
     def __init__(self, data_loader, embedding_model=None):
         self.data_loader = data_loader
         self.embedding_model = embedding_model
-        # Use a reasonable default for history if not defined in data_loader
-        self.max_history_turns = getattr(data_loader, 'MAX_HISTORY_TURNS', 10)
+        self.llm_client: BaseLLMClient = get_llm_client()  # This now supports both OpenAI and Ollama
+        self.settings = settings
     
     @abstractmethod
     async def recommend(
@@ -29,14 +34,12 @@ class BaseRecommender(ABC):
     def _format_conversation(self, messages: List[Message]) -> str:
         """Format conversation as string"""
         formatted = []
-        for msg in messages[-self.max_history_turns:]:
+        for msg in messages[-self.settings.MAX_HISTORY_TURNS:]:
             formatted.append(f"{msg.role.capitalize()}: {msg.content}")
         return "\n".join(formatted)
     
     def _parse_recommendations(self, response: str) -> List[str]:
         """Parse recommendations from response"""
-        import re
-        
         movies = []
         
         # Try to find JSON first
@@ -73,3 +76,26 @@ class BaseRecommender(ABC):
         # Deduplicate and clean
         movies = list(dict.fromkeys(movies))
         return [m.strip() for m in movies if m.strip()][:10]
+    
+    async def _call_llm(
+        self, 
+        prompt: str, 
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.7
+    ) -> str:
+        """Unified LLM call using the configured client"""
+        try:
+            return await self.llm_client.generate(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=self.settings.OPENAI_MAX_TOKENS  # Works for both
+            )
+        except Exception as e:
+            logger.error(f"LLM call failed: {e}")
+            # Fallback to mock if available
+            if self.settings.USE_MOCK_LLM:
+                logger.info("Falling back to mock LLM")
+                mock_client = MockLLMClient()
+                return await mock_client.generate(prompt, system_prompt, temperature)
+            raise
