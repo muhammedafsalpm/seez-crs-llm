@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any
 import aiohttp
 import openai
 import logging
+import asyncio
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,7 @@ class OllamaClient(BaseLLMClient):
         self.base_url = settings.OLLAMA_URL
         self.model = settings.OLLAMA_MODEL
         self._session: Optional[aiohttp.ClientSession] = None
+        print(f"🔧 Initialized OllamaClient with URL: {self.base_url}, Model: {self.model}")
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create session"""
@@ -111,31 +113,46 @@ class OllamaClient(BaseLLMClient):
         payload = {
             "model": self.model,
             "prompt": full_prompt,
+            "stream": False,
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens
-            },
-            "stream": False
+            }
         }
+        
+        print(f"📤 Sending to Ollama: {self.base_url}/api/generate")
+        print(f"   Model: {self.model}")
+        print(f"   Prompt length: {len(full_prompt)} chars")
         
         try:
             async with session.post(
                 f"{self.base_url}/api/generate",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=60)
+                timeout=aiohttp.ClientTimeout(total=120)
             ) as response:
+                print(f"📥 Response status: {response.status}")
+                
                 if response.status == 200:
                     result = await response.json()
-                    return result.get("response", "")
+                    generated_text = result.get("response", "")
+                    print(f"✅ Generated {len(generated_text)} chars")
+                    return generated_text
                 else:
                     error_text = await response.text()
-                    logger.error(f"Ollama error {response.status}: {error_text}")
+                    print(f"❌ Ollama error: {error_text}")
                     raise Exception(f"Ollama API error: {response.status}")
+                    
         except aiohttp.ClientConnectorError:
-            logger.error("Cannot connect to Ollama. Is it running? Run: ollama serve")
-            raise Exception("Ollama service not available. Please run: ollama serve")
+            print(f"❌ Cannot connect to Ollama at {self.base_url}")
+            print(f"   Make sure Ollama is running: ollama serve")
+            raise Exception("Ollama service not available")
+            
+        except asyncio.TimeoutError:
+            print(f"❌ Ollama request timeout")
+            raise Exception("Ollama request timeout")
+            
         except Exception as e:
-            logger.error(f"Ollama generation error: {e}")
+            print(f"❌ Ollama generation error: {e}")
             raise
     
     async def close(self):
@@ -147,20 +164,21 @@ class OllamaClient(BaseLLMClient):
         """Check if Ollama is available and model is loaded"""
         session = await self._get_session()
         try:
-            # Check if Ollama is running
+            print(f"🔍 Health check: {self.base_url}/api/tags")
             async with session.get(f"{self.base_url}/api/tags") as response:
                 if response.status == 200:
                     data = await response.json()
-                    models = [m["name"] for m in data.get("models", [])]
-                    # Check if our model is available
+                    models = [m.get("name", "") for m in data.get("models", [])]
+                    print(f"   Available models: {models}")
                     if any(self.model in m for m in models):
+                        print(f"   ✅ Model '{self.model}' found")
                         return True
                     else:
-                        logger.warning(f"Model {self.model} not found. Available: {models}")
+                        print(f"   ❌ Model '{self.model}' not found")
                         return False
                 return False
         except Exception as e:
-            logger.error(f"Ollama health check failed: {e}")
+            print(f"   ❌ Health check failed: {e}")
             return False
 
 
