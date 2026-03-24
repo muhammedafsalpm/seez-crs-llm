@@ -81,9 +81,85 @@ A production-ready, high-performance conversational recommender system built wit
 
 ---
 
-## 🛠️ Installation
+## 📁 Project Structure
 
-### 1. Clone the Repository
+```text
+seez/
+├── backend/
+│   └── crs_api/            # FastAPI Backend
+│       ├── app/            # Application logic
+│       ├── data/           # FAISS index storage
+│       ├── requirements.txt
+│       └── .env            # Backend configuration
+├── frontend/               # React (Vite) Frontend
+│   ├── src/                # Component logic
+│   ├── .env                # Frontend configuration
+│   └── package.json
+└── other/
+    └── LLM_Redial/         # Dataset location
+```
+
+---
+
+## 🛠️ Installation & Setup
+
+### 1. Prerequisites
+- Python 3.10+
+- Node.js & npm
+- Ollama (for local LLM support)
+
+### 2. Backend Setup
 ```bash
-git clone https://github.com/your-username/crs-api.git
-cd crs-api
+cd backend/crs_api
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 3. Frontend Setup
+```bash
+cd frontend
+npm install
+```
+
+---
+
+## 🚀 Running the System
+
+### 1. Start Ollama
+Ensure Ollama is running with your preferred model:
+```bash
+ollama run phi
+```
+
+### 2. Start Backend
+From `backend/crs_api`:
+```bash
+python run.py
+```
+The API will be available at `http://localhost:8000`.
+
+### 3. Start Frontend
+From `frontend`:
+```bash
+npm run dev
+```
+The UI will be available at `http://localhost:5173`.
+
+---
+
+## 🎯 Video Demonstration Guide
+
+To demonstrate the system's full capabilities:
+1. **Health Check**: View the status indicator in the header.
+2. **Metrics**: See real-time dataset stats in the sidebar.
+3. **Personalization**: Enter User ID `A30Q8X8B1S3GGT` in the Sidebar to load their specific movie history.
+4. **Recommendation Modes**: 
+   - Switch between **Few-Shot**, **RAG**, and **Agent** modes.
+   - Use **RAG** for context-aware suggestions based on retrieved conversations.
+5. **Streaming Output**: Witness real-time response generation in the chat window.
+
+---
+
+## 🛡️ License
+MIT License - Copyright (c) 2026
