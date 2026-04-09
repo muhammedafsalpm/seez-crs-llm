@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from app.services.base import BaseRecommender
 from app.models import Message
 
-from app.utils.prompts import SYSTEM_PROMPT, get_improved_prompt_1, get_improved_prompt_2, get_few_shot_prompt
+from app.utils.prompts import SYSTEM_PROMPT, get_improved_prompt_1, get_improved_prompt_2
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,10 +35,10 @@ class FewShotRecommender(BaseRecommender):
         # Use improved prompt for better accuracy
         if len(conversation_history) > 3:
             # Use chain-of-thought for longer conversations
-            prompt = get_improved_prompt_2(formatted_conversation, user_history)
+            prompt = get_improved_prompt_2(formatted_conversation, user_history, examples=self.examples)
         else:
             # Use structured extraction for shorter conversations
-            prompt = get_improved_prompt_1(formatted_conversation, user_history)
+            prompt = get_improved_prompt_1(formatted_conversation, user_history, examples=self.examples)
         
         # Call LLM using unified client (supports OpenAI and Ollama)
         try:

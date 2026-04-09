@@ -13,7 +13,7 @@ Guidelines:
 
 
 # ========== PROMPT IMPROVEMENT 1: Structured Preference Extraction ==========
-def get_improved_prompt_1(conversation: str, user_history: list = None) -> str:
+def get_improved_prompt_1(conversation: str, user_history: list = None, examples: list = None) -> str:
     """
     IMPROVEMENT 1: Explicit preference extraction before recommendation
     
@@ -24,7 +24,26 @@ def get_improved_prompt_1(conversation: str, user_history: list = None) -> str:
     
     Expected impact: +15-20% relevance
     """
-    return f"""{SYSTEM_PROMPT}
+    prompt = f"""{SYSTEM_PROMPT}
+
+"""
+    
+    # Add few-shot examples if provided
+    if examples and len(examples) > 0:
+        prompt += """═══════════════════════════════════════════════════════════════
+SUCCESSFUL RECOMMENDATION EXAMPLES (Learn from these patterns):
+═══════════════════════════════════════════════════════════════
+
+"""
+        for i, (example_conv, example_recs) in enumerate(examples[:3], 1):
+            prompt += f"""Example {i}:
+User Conversation: {example_conv[:300]}...
+→ Recommended Movies: {', '.join(example_recs[:5])}
+
+"""
+        prompt += "═══════════════════════════════════════════════════════════════\n\n"
+    
+    prompt += f"""Now, follow these steps for the current user:
 
 STEP 1 - Extract User Preferences:
 Analyze the conversation below and extract:
@@ -64,10 +83,12 @@ Using the preference profile from STEP 2, greet the user politely and recommend 
 5. [Movie Title] - Why it matches their preferences
 
 Proceed step by step:"""
+    
+    return prompt
 
 
 # ========== PROMPT IMPROVEMENT 2: Chain-of-Thought Reasoning ==========
-def get_improved_prompt_2(conversation: str, user_history: list = None) -> str:
+def get_improved_prompt_2(conversation: str, user_history: list = None, examples: list = None) -> str:
     """
     IMPROVEMENT 2: Chain-of-thought reasoning with similarity scoring
     
@@ -78,9 +99,26 @@ def get_improved_prompt_2(conversation: str, user_history: list = None) -> str:
     
     Expected impact: +10-15% relevance, better explainability
     """
-    return f"""{SYSTEM_PROMPT}
+    prompt = f"""{SYSTEM_PROMPT}
 
-Follow this reasoning chain:
+"""
+    
+    # Add few-shot examples if provided
+    if examples and len(examples) > 0:
+        prompt += """═══════════════════════════════════════════════════════════════
+SUCCESSFUL RECOMMENDATION EXAMPLES (Learn from these patterns):
+═══════════════════════════════════════════════════════════════
+
+"""
+        for i, (example_conv, example_recs) in enumerate(examples[:3], 1):
+            prompt += f"""Example {i}:
+User Conversation: {example_conv[:300]}...
+→ Recommended Movies: {', '.join(example_recs[:5])}
+
+"""
+        prompt += "═══════════════════════════════════════════════════════════════\n\n"
+    
+    prompt += f"""Now, follow this reasoning chain for the current user:
 
 Step 1 - Understand User's Stated Preferences:
 Extract explicit preferences from the conversation:
@@ -146,25 +184,6 @@ def get_rag_prompt(conversation: str, retrieved_contexts: list, user_history: li
     return prompt
 
 
-# ========== Few-Shot Prompt ==========
-def get_few_shot_prompt(conversation: str, examples: list, user_history: list = None) -> str:
-    """Few-shot learning prompt with examples"""
-    prompt = SYSTEM_PROMPT + "\n\n"
-    
-    prompt += "Examples of successful recommendations:\n\n"
-    for i, (example_conv, recs) in enumerate(examples[:3], 1):
-        prompt += f"Example {i}:\n"
-        prompt += f"User: {example_conv[:300]}\n"
-        prompt += f"Recommendations: {', '.join(recs[:3])}\n\n"
-    
-    prompt += f"Current conversation:\n{conversation}\n\n"
-    
-    if user_history:
-        prompt += f"User's watch history: {', '.join(user_history[:10])}\n\n"
-    
-    prompt += "Please start with a friendly greeting, then provide 5 recommendations with explanations:"
-    
-    return prompt
 
 
 # ========== Agent Prompt with Tool Use ==========
