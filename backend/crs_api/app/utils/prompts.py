@@ -170,18 +170,18 @@ def get_few_shot_prompt(conversation: str, examples: list, user_history: list = 
 # ========== Agent Prompt with Tool Use ==========
 def get_agent_prompt(conversation: str, available_items: list, user_history: list = None) -> str:
     """Agent-based prompt simulating tool use"""
-    prompt = """{SYSTEM_PROMPT}
+    prompt = f"""{SYSTEM_PROMPT}
 
 You are a movie recommendation agent with access to a movie database.
 
 AVAILABLE MOVIES (select from these):
-{}
+{', '.join(available_items[:30])}
 
 USER'S WATCH HISTORY:
-{}
+{', '.join(user_history[:15]) if user_history else "None"}
 
 CURRENT CONVERSATION:
-{}
+{conversation}
 
 Your task:
 1. Analyze user preferences
@@ -189,10 +189,6 @@ Your task:
 3. Select appropriate movies from available list
 4. Provide reasoning
 
-Start with a warm greeting, then recommend 5 movies with explanations from the list above:""".format(
-    ', '.join(available_items[:30]),
-    ', '.join(user_history[:15]) if user_history else "None",
-    conversation
-)
+Start with a warm greeting, then recommend 5 movies with explanations from the list above:"""
     
     return prompt
